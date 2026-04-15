@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 
-export default function Library() {
+export default function Library({ refreshKey }) {
   const { token } = useAuth();
   const [songs, setSongs] = useState([]);
   const [playlists, setPlaylists] = useState([]);
@@ -26,7 +26,7 @@ export default function Library() {
 
   useEffect(() => {
     Promise.all([fetchSongs(), fetchPlaylists()]).finally(() => setLoading(false));
-  }, [fetchSongs, fetchPlaylists]);
+  }, [fetchSongs, fetchPlaylists, refreshKey]);
 
   const deleteSong = async (id) => {
     await fetch(`/api/songs/${id}`, { method: 'DELETE', headers });

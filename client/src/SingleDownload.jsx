@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext';
 
 const API_BASE = '/api';
 
-export default function SingleDownload() {
+export default function SingleDownload({ onSongSaved }) {
   const { token } = useAuth();
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
@@ -64,8 +64,9 @@ export default function SingleDownload() {
           duration: videoInfo.duration,
         }),
       });
+      onSongSaved?.();
     } catch {}
-  }, [token, videoInfo, fileName, url]);
+  }, [token, videoInfo, fileName, url, onSongSaved]);
 
   const pollStatus = useCallback((id) => {
     pollingRef.current = setInterval(async () => {

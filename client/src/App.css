@@ -309,6 +309,71 @@
   cursor: not-allowed;
 }
 
+/* ─── Playlist import ──────────────────────────────────────── */
+.playlist-import {
+  margin-bottom: 12px;
+}
+
+.playlist-import-label {
+  display: block;
+  font-size: 0.78rem;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.playlist-import-row {
+  display: flex;
+  gap: 8px;
+}
+
+.playlist-import-row input {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.playlist-import-row input:focus {
+  border-color: #ff4757;
+}
+
+.playlist-import-row input::placeholder {
+  color: #555;
+}
+
+.playlist-import-row .btn {
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.playlist-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.playlist-divider::before,
+.playlist-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.playlist-divider span {
+  font-size: 0.72rem;
+  color: #555;
+  white-space: nowrap;
+}
+
 /* ─── Filename field ───────────────────────────────────────── */
 .filename-group {
   margin-top: 12px;

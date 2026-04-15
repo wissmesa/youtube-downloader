@@ -70,6 +70,27 @@ function detectPlatform(url) {
   }
 }
 
+function isPlaylistUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return (parsed.hostname.includes("youtube.com") && parsed.pathname === "/playlist" && parsed.searchParams.has("list"))
+      || (parsed.hostname.includes("youtube.com") && parsed.searchParams.has("list") && parsed.searchParams.has("v"));
+  } catch {
+    return false;
+  }
+}
+
+function getPlaylistUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const listId = parsed.searchParams.get("list");
+    if (listId) return `https://www.youtube.com/playlist?list=${listId}`;
+    return url;
+  } catch {
+    return url;
+  }
+}
+
 function spawnWithTimeout(cmd, args, timeoutMs) {
   const proc = spawn(cmd, args);
   const timer = setTimeout(() => {
@@ -151,6 +172,78 @@ app.post("/api/info", (req, res) => {
     } catch (e) {
       log("info", "Error parseando JSON:", e.message);
       res.status(500).json({ error: "Error procesando info del video" });
+    }
+  });
+});
+
+// ─── Info de playlist (retorna lista de videos) ──────────────
+app.post("/api/playlist-info", (req, res) => {
+  const rawUrl = req.body.url;
+  log("playlist", "Solicitud recibida:", rawUrl);
+
+  if (!rawUrl || !isPlaylistUrl(rawUrl)) {
+    return res.status(400).json({ error: "URL de playlist no válida" });
+  }
+
+  const url = getPlaylistUrl(rawUrl);
+  log("playlist", "URL playlist:", url);
+
+  const PLAYLIST_TIMEOUT = 60_000;
+  const ytdlp = spawnWithTimeout("yt-dlp", [
+    "--flat-playlist",
+    "--dump-json",
+    "--no-warnings",
+    url,
+  ], PLAYLIST_TIMEOUT);
+
+  let data = "";
+  let stderrData = "";
+
+  ytdlp.stdout.on("data", (chunk) => { data += chunk; });
+  ytdlp.stderr.on("data", (chunk) => { stderrData += chunk; });
+
+  ytdlp.on("error", (err) => {
+    log("playlist", "ERROR:", err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Error al procesar playlist" });
+    }
+  });
+
+  ytdlp.on("close", (code, signal) => {
+    if (res.headersSent) return;
+
+    if (signal === "SIGKILL") {
+      return res.status(504).json({ error: "Tiempo de espera agotado" });
+    }
+    if (code !== 0) {
+      const detail = stderrData.trim().split("\n").pop() || "Error desconocido";
+      return res.status(500).json({ error: `yt-dlp error: ${detail}` });
+    }
+
+    try {
+      const lines = data.trim().split("\n").filter(Boolean);
+      const videos = lines.map(line => {
+        const info = JSON.parse(line);
+        let videoUrl = info.webpage_url || info.url || "";
+        if (videoUrl && !videoUrl.startsWith("http")) {
+          videoUrl = `https://www.youtube.com/watch?v=${videoUrl}`;
+        }
+        return {
+          url: videoUrl,
+          title: info.title || "Sin título",
+          duration: info.duration_string || info.duration
+            ? `${Math.floor((info.duration || 0) / 60)}:${String((info.duration || 0) % 60).padStart(2, "0")}`
+            : "",
+          channel: info.channel || info.uploader || "",
+          thumbnail: info.thumbnails?.[0]?.url || info.thumbnail || "",
+        };
+      }).filter(v => v.url);
+
+      log("playlist", `OK: ${videos.length} videos encontrados`);
+      res.json({ videos });
+    } catch (e) {
+      log("playlist", "Error parseando:", e.message);
+      res.status(500).json({ error: "Error procesando playlist" });
     }
   });
 });

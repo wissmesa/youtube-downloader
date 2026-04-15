@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import { AuthProvider, useAuth } from './AuthContext';
 import AuthForm from './AuthForm';
@@ -10,6 +10,8 @@ function AppContent() {
   const { user, loading, logout } = useAuth();
   const [dlTab, setDlTab] = useState('single');
   const [showAuth, setShowAuth] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const onSongSaved = useCallback(() => setRefreshKey(k => k + 1), []);
 
   useEffect(() => {
     if (user) setShowAuth(false);
@@ -98,13 +100,13 @@ function AppContent() {
               </button>
             </div>
 
-            {dlTab === 'single' && <SingleDownload />}
-            {dlTab === 'multi' && <MultiDownload />}
+            {dlTab === 'single' && <SingleDownload onSongSaved={onSongSaved} />}
+            {dlTab === 'multi' && <MultiDownload onSongSaved={onSongSaved} />}
           </div>
         </aside>
 
         <main className="lib-panel">
-          <Library />
+          <Library refreshKey={refreshKey} />
         </main>
       </div>
     </div>

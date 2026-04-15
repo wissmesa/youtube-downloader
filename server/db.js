@@ -41,6 +41,8 @@ export async function initDB() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
       );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS songs_url_user_unique ON songs (url, created_by);
     `);
     console.log("[db] Tablas inicializadas");
   } finally {

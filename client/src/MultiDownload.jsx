@@ -61,12 +61,15 @@ function SongItem({ item, onNameChange, onDownloadFile }) {
   );
 }
 
-export default function MultiDownload() {
+export default function MultiDownload({ onSongSaved }) {
   const { token } = useAuth();
   const [urls, setUrls] = useState(['']);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [playlistUrl, setPlaylistUrl] = useState('');
+  const [loadingPlaylist, setLoadingPlaylist] = useState(false);
+  const [playlistError, setPlaylistError] = useState('');
   const pollIntervals = useRef({});
 
   const addUrl = () => setUrls(prev => [...prev, '']);
@@ -77,6 +80,37 @@ export default function MultiDownload() {
 
   const changeUrl = (index, value) => {
     setUrls(prev => prev.map((u, i) => i === index ? value : u));
+  };
+
+  const importPlaylist = async () => {
+    if (!playlistUrl.trim()) return;
+    setLoadingPlaylist(true);
+    setPlaylistError('');
+
+    try {
+      const res = await fetch(`${API_BASE}/playlist-info`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: playlistUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      if (data.videos && data.videos.length > 0) {
+        const newUrls = data.videos.map(v => v.url);
+        setUrls(prev => {
+          const cleaned = prev.filter(u => u.trim().length > 0);
+          return [...cleaned, ...newUrls];
+        });
+        setPlaylistUrl('');
+      } else {
+        setPlaylistError('No se encontraron videos en la playlist');
+      }
+    } catch (err) {
+      setPlaylistError(err.message || 'Error al importar playlist');
+    } finally {
+      setLoadingPlaylist(false);
+    }
   };
 
   const validUrls = urls.filter(u => u.trim().length > 0);
@@ -147,8 +181,9 @@ export default function MultiDownload() {
           duration: song.duration,
         }),
       });
+      onSongSaved?.();
     } catch {}
-  }, [token]);
+  }, [token, onSongSaved]);
 
   const pollStatus = useCallback((songId, fileId) => {
     pollIntervals.current[songId] = setInterval(async () => {
@@ -233,6 +268,32 @@ export default function MultiDownload() {
 
   return (
     <div className="tab-content">
+      <div className="playlist-import">
+        <label className="playlist-import-label">Importar desde playlist de YouTube</label>
+        <div className="playlist-import-row">
+          <input
+            type="text"
+            placeholder="https://www.youtube.com/playlist?list=..."
+            value={playlistUrl}
+            onChange={(e) => setPlaylistUrl(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !loadingPlaylist && importPlaylist()}
+            disabled={loadingPlaylist || isBusy}
+          />
+          <button
+            className="btn btn-primary"
+            onClick={importPlaylist}
+            disabled={loadingPlaylist || isBusy || !playlistUrl.trim()}
+          >
+            {loadingPlaylist ? <><span className="spinner" /> Cargando...</> : 'Importar'}
+          </button>
+        </div>
+        {playlistError && <div className="error" style={{ marginTop: 6 }}>{playlistError}</div>}
+      </div>
+
+      <div className="playlist-divider">
+        <span>o agrega URLs individuales</span>
+      </div>
+
       <div className="url-list">
         {urls.map((url, index) => (
           <div className="url-row" key={index}>

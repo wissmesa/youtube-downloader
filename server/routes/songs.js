@@ -4,6 +4,22 @@ import { authMiddleware } from "./auth.js";
 
 const router = Router();
 
+function normalizeUrl(raw) {
+  try {
+    const parsed = new URL(raw);
+    if (/youtube\.com/.test(parsed.hostname)) {
+      const v = parsed.searchParams.get("v");
+      if (v) return `https://www.youtube.com/watch?v=${v}`;
+    }
+    if (/youtu\.be/.test(parsed.hostname)) {
+      return `https://www.youtube.com/watch?v=${parsed.pathname.slice(1)}`;
+    }
+    return `${parsed.origin}${parsed.pathname}`.replace(/\/$/, "");
+  } catch {
+    return raw;
+  }
+}
+
 router.use(authMiddleware);
 
 router.get("/", async (req, res) => {
@@ -19,24 +35,20 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { name, url, platform, thumbnail, channel, duration } = req.body;
+  const { name, url: rawUrl, platform, thumbnail, channel, duration } = req.body;
 
-  if (!name || !url) {
+  if (!name || !rawUrl) {
     return res.status(400).json({ error: "Nombre y URL son requeridos" });
   }
 
-  try {
-    const existing = await pool.query(
-      "SELECT id FROM songs WHERE url = $1 AND created_by = $2",
-      [url, req.user.id]
-    );
-    if (existing.rows.length > 0) {
-      return res.json(existing.rows[0]);
-    }
+  const url = normalizeUrl(rawUrl);
 
+  try {
     const result = await pool.query(
       `INSERT INTO songs (name, url, platform, thumbnail, channel, duration, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (url, created_by) DO UPDATE SET name = EXCLUDED.name
+       RETURNING *`,
       [name, url, platform || "youtube", thumbnail || null, channel || null, duration || null, req.user.id]
     );
     res.status(201).json(result.rows[0]);
