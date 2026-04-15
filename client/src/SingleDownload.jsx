@@ -95,10 +95,13 @@ export default function SingleDownload() {
   const downloadFile = () => {
     if (!fileId) return;
     const name = fileName.trim() || 'audio';
+    const url = `${API_BASE}/file/${fileId}?name=${encodeURIComponent(name)}`;
     const a = document.createElement('a');
-    a.href = `${API_BASE}/file/${fileId}?name=${encodeURIComponent(name)}`;
+    a.href = url;
     a.download = `${name}.mp3`;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
   };
 
   const handleKeyDown = (e) => {

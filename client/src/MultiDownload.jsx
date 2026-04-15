@@ -184,17 +184,21 @@ export default function MultiDownload() {
   const onDownloadFile = (song) => {
     if (!song.fileId) return;
     const name = song.fileName.trim() || 'audio';
+    const url = `${API_BASE}/file/${song.fileId}?name=${encodeURIComponent(name)}`;
     const a = document.createElement('a');
-    a.href = `${API_BASE}/file/${song.fileId}?name=${encodeURIComponent(name)}`;
+    a.href = url;
     a.download = `${name}.mp3`;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
   };
 
-  const downloadAllFiles = () => {
+  const downloadAllFiles = async () => {
     const doneSongs = songs.filter(s => s.status === 'done');
-    doneSongs.forEach((song, i) => {
-      setTimeout(() => onDownloadFile(song), i * 500);
-    });
+    for (const song of doneSongs) {
+      onDownloadFile(song);
+      await new Promise(r => setTimeout(r, 1000));
+    }
   };
 
   const readySongs = songs.filter(s => s.status === 'ready');
