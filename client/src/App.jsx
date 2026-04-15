@@ -8,8 +8,13 @@ function App() {
 
   return (
     <div className="app">
-      <h1>YouTube a MP3</h1>
-      <p className="subtitle">Descarga audio de YouTube en formato MP3</p>
+      <h1>Audio Downloader</h1>
+      <p className="subtitle">Descarga audio en MP3 desde YouTube o SoundCloud</p>
+
+      <div className="platforms">
+        <span className="platform-badge yt">YouTube</span>
+        <span className="platform-badge sc">SoundCloud</span>
+      </div>
 
       <div className="tabs">
         <button

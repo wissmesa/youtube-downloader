@@ -38,7 +38,7 @@ export default function SingleDownload() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setVideoInfo(data);
+      setVideoInfo({ ...data, platform: data.platform || 'youtube' });
       setFileName(data.title);
     } catch (err) {
       setError(err.message || 'Error al obtener info del video');
@@ -113,7 +113,7 @@ export default function SingleDownload() {
       <div className="input-group">
         <input
           type="text"
-          placeholder="https://www.youtube.com/watch?v=..."
+          placeholder="URL de YouTube o SoundCloud..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -135,7 +135,7 @@ export default function SingleDownload() {
 
       {loading && (
         <div className="loading-hint">
-          Consultando YouTube, esto puede tardar unos segundos...
+          Buscando informacion, esto puede tardar unos segundos...
         </div>
       )}
 
@@ -144,10 +144,15 @@ export default function SingleDownload() {
       {videoInfo && (
         <>
           <div className="video-info">
-            <img src={videoInfo.thumbnail} alt={videoInfo.title} />
+            {videoInfo.thumbnail && (
+              <img src={videoInfo.thumbnail} alt={videoInfo.title} />
+            )}
             <div className="video-details">
+              <span className={`platform-badge ${videoInfo.platform === 'soundcloud' ? 'sc' : 'yt'}`}>
+                {videoInfo.platform === 'soundcloud' ? 'SoundCloud' : 'YouTube'}
+              </span>
               <h3>{videoInfo.title}</h3>
-              <p>{videoInfo.channel} &middot; {videoInfo.duration}</p>
+              <p>{videoInfo.channel}{videoInfo.duration ? ` · ${videoInfo.duration}` : ''}</p>
             </div>
           </div>
 

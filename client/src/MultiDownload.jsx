@@ -214,7 +214,7 @@ export default function MultiDownload() {
             <span className="url-number">{index + 1}</span>
             <input
               type="text"
-              placeholder="https://www.youtube.com/watch?v=..."
+              placeholder="URL de YouTube o SoundCloud..."
               value={url}
               onChange={(e) => changeUrl(index, e.target.value)}
               disabled={isBusy}

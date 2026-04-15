@@ -27,19 +27,42 @@ function log(tag, ...args) {
   console.log(`[${ts}][${tag}]`, ...args);
 }
 
-function isValidYoutubeUrl(url) {
-  return /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)[\w-]+/.test(url);
-}
+const SUPPORTED_HOSTS = [
+  /youtube\.com/,
+  /youtu\.be/,
+  /soundcloud\.com/,
+];
 
-function cleanYoutubeUrl(url) {
+function isValidUrl(url) {
   try {
     const parsed = new URL(url);
-    if (parsed.hostname.includes("youtu.be")) return url.split("?")[0];
-    const videoId = parsed.searchParams.get("v");
-    if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
+    return SUPPORTED_HOSTS.some(re => re.test(parsed.hostname));
+  } catch {
+    return false;
+  }
+}
+
+function cleanUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("youtube.com")) {
+      const videoId = parsed.searchParams.get("v");
+      if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
+    }
     return url;
   } catch {
     return url;
+  }
+}
+
+function detectPlatform(url) {
+  try {
+    const host = new URL(url).hostname;
+    if (/youtube|youtu\.be/.test(host)) return "youtube";
+    if (/soundcloud/.test(host)) return "soundcloud";
+    return "unknown";
+  } catch {
+    return "unknown";
   }
 }
 
@@ -62,13 +85,14 @@ app.post("/api/info", (req, res) => {
   const rawUrl = req.body.url;
   log("info", "Solicitud recibida:", rawUrl);
 
-  if (!rawUrl || !isValidYoutubeUrl(rawUrl)) {
-    log("info", "URL no válida");
-    return res.status(400).json({ error: "URL de YouTube no válida" });
+  if (!rawUrl || !isValidUrl(rawUrl)) {
+    log("info", "URL no válida:", rawUrl);
+    return res.status(400).json({ error: "URL no soportada. Usa YouTube o SoundCloud." });
   }
 
-  const url = cleanYoutubeUrl(rawUrl);
-  log("info", "URL limpia:", url);
+  const url = cleanUrl(rawUrl);
+  const platform = detectPlatform(url);
+  log("info", `[${platform}] URL limpia:`, url);
 
   const ytdlp = spawnWithTimeout("yt-dlp", [
     "--dump-json",
@@ -116,8 +140,9 @@ app.post("/api/info", (req, res) => {
       res.json({
         title: info.title,
         thumbnail: info.thumbnail,
-        duration: info.duration_string,
-        channel: info.channel,
+        duration: info.duration_string || "",
+        channel: info.channel || info.uploader || "",
+        platform,
       });
     } catch (e) {
       log("info", "Error parseando JSON:", e.message);
@@ -131,12 +156,12 @@ app.post("/api/download", (req, res) => {
   const rawUrl = req.body.url;
   log("download", "Solicitud recibida:", rawUrl);
 
-  if (!rawUrl || !isValidYoutubeUrl(rawUrl)) {
+  if (!rawUrl || !isValidUrl(rawUrl)) {
     log("download", "URL no válida");
-    return res.status(400).json({ error: "URL de YouTube no válida" });
+    return res.status(400).json({ error: "URL no soportada. Usa YouTube o SoundCloud." });
   }
 
-  const url = cleanYoutubeUrl(rawUrl);
+  const url = cleanUrl(rawUrl);
   const fileId = randomUUID();
   const outputTemplate = path.join(DOWNLOADS_DIR, `${fileId}.%(ext)s`);
   log("download", "fileId:", fileId, "| URL:", url);
