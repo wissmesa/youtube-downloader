@@ -91,6 +91,16 @@ function getPlaylistUrl(url) {
   }
 }
 
+const COOKIES_PATH = path.resolve(__dirname, "cookies.txt");
+const hasCookies = fs.existsSync(COOKIES_PATH);
+if (hasCookies) log("server", "Archivo de cookies encontrado:", COOKIES_PATH);
+
+function ytdlpArgs(extra = []) {
+  const base = ["--no-warnings"];
+  if (hasCookies) base.push("--cookies", COOKIES_PATH);
+  return [...base, ...extra];
+}
+
 function spawnWithTimeout(cmd, args, timeoutMs) {
   const proc = spawn(cmd, args);
   const timer = setTimeout(() => {
@@ -119,13 +129,12 @@ app.post("/api/info", (req, res) => {
   const platform = detectPlatform(url);
   log("info", `[${platform}] URL limpia:`, url);
 
-  const ytdlp = spawnWithTimeout("yt-dlp", [
+  const ytdlp = spawnWithTimeout("yt-dlp", ytdlpArgs([
     "--dump-json",
     "--no-download",
     "--no-playlist",
-    "--no-warnings",
     url,
-  ], YT_DLP_TIMEOUT);
+  ]), YT_DLP_TIMEOUT);
 
   let data = "";
   let stderrData = "";
@@ -189,12 +198,11 @@ app.post("/api/playlist-info", (req, res) => {
   log("playlist", "URL playlist:", url);
 
   const PLAYLIST_TIMEOUT = 60_000;
-  const ytdlp = spawnWithTimeout("yt-dlp", [
+  const ytdlp = spawnWithTimeout("yt-dlp", ytdlpArgs([
     "--flat-playlist",
     "--dump-json",
-    "--no-warnings",
     url,
-  ], PLAYLIST_TIMEOUT);
+  ]), PLAYLIST_TIMEOUT);
 
   let data = "";
   let stderrData = "";
@@ -268,7 +276,7 @@ app.post("/api/download", (req, res) => {
 
   res.json({ fileId });
 
-  const ytdlp = spawnWithTimeout("yt-dlp", [
+  const ytdlp = spawnWithTimeout("yt-dlp", ytdlpArgs([
     "-x",
     "--audio-format", "mp3",
     "--audio-quality", "0",
@@ -276,7 +284,7 @@ app.post("/api/download", (req, res) => {
     "--no-playlist",
     "--newline",
     url,
-  ], DOWNLOAD_TIMEOUT);
+  ]), DOWNLOAD_TIMEOUT);
 
   ytdlp.stderr.on("data", (chunk) => {
     const text = chunk.toString();
