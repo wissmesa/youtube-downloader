@@ -17,7 +17,7 @@ function SongItem({ item, onNameChange, onDownloadFile }) {
         </div>
       </div>
 
-      {item.status === 'ready' && (
+      {(item.status === 'ready' || item.status === 'done') && (
         <div className="filename-group">
           <label>Nombre:</label>
           <input
@@ -61,28 +61,32 @@ function SongItem({ item, onNameChange, onDownloadFile }) {
 }
 
 export default function MultiDownload() {
-  const [urlsText, setUrlsText] = useState('');
+  const [urls, setUrls] = useState(['']);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const pollIntervals = useRef({});
 
-  const parseUrls = (text) => {
-    return text
-      .split(/[\n,]+/)
-      .map(u => u.trim())
-      .filter(u => u.length > 0);
+  const addUrl = () => setUrls(prev => [...prev, '']);
+
+  const removeUrl = (index) => {
+    setUrls(prev => prev.length <= 1 ? [''] : prev.filter((_, i) => i !== index));
   };
+
+  const changeUrl = (index, value) => {
+    setUrls(prev => prev.map((u, i) => i === index ? value : u));
+  };
+
+  const validUrls = urls.filter(u => u.trim().length > 0);
 
   const updateSong = useCallback((id, updates) => {
     setSongs(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
   }, []);
 
   const fetchAllInfo = async () => {
-    const urls = parseUrls(urlsText);
-    if (urls.length === 0) return;
+    if (validUrls.length === 0) return;
 
-    const items = urls.map((url, i) => ({
+    const items = validUrls.map((url, i) => ({
       id: `song-${i}-${Date.now()}`,
       url,
       title: '',
@@ -196,29 +200,52 @@ export default function MultiDownload() {
   const readySongs = songs.filter(s => s.status === 'ready');
   const doneSongs = songs.filter(s => s.status === 'done');
   const hasDownloading = songs.some(s => s.status === 'downloading');
+  const isBusy = loading || downloading || hasDownloading;
 
   return (
     <div className="tab-content">
-      <textarea
-        className="multi-input"
-        placeholder={"Pega las URLs de YouTube (una por linea):\nhttps://youtube.com/watch?v=...\nhttps://youtube.com/watch?v=..."}
-        value={urlsText}
-        onChange={(e) => setUrlsText(e.target.value)}
-        disabled={loading || downloading || hasDownloading}
-        rows={4}
-      />
+      <div className="url-list">
+        {urls.map((url, index) => (
+          <div className="url-row" key={index}>
+            <span className="url-number">{index + 1}</span>
+            <input
+              type="text"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={url}
+              onChange={(e) => changeUrl(index, e.target.value)}
+              disabled={isBusy}
+            />
+            <button
+              className="btn-icon btn-remove"
+              onClick={() => removeUrl(index)}
+              disabled={isBusy || (urls.length <= 1 && !url)}
+              title="Eliminar"
+            >
+              &times;
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        className="btn-add"
+        onClick={addUrl}
+        disabled={isBusy}
+      >
+        + Agregar otra URL
+      </button>
 
       <button
         className="btn btn-primary btn-full"
         onClick={fetchAllInfo}
-        disabled={loading || downloading || hasDownloading || !urlsText.trim()}
+        disabled={isBusy || validUrls.length === 0}
       >
         {loading ? (
           <>
             <span className="spinner" />
             Buscando...
           </>
-        ) : `Buscar (${parseUrls(urlsText).length} URLs)`}
+        ) : `Buscar (${validUrls.length})`}
       </button>
 
       {songs.length > 0 && (
