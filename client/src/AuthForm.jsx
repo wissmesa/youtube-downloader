@@ -43,12 +43,12 @@ export default function AuthForm() {
         >
           Iniciar sesion
         </button>
-        <button
+        {/* <button
           className={`auth-tab ${mode === 'register' ? 'auth-tab-active' : ''}`}
           onClick={() => { setMode('register'); setError(''); }}
         >
           Registrarse
-        </button>
+        </button> */}
       </div>
 
       <form onSubmit={handleSubmit}>

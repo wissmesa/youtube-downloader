@@ -60,8 +60,17 @@ export default function Library({ refreshKey }) {
     setSelectedPlaylist(pl);
     setShowAddSongs(false);
     if (pl.songs && pl.songs.length > 0) {
-      const allSongs = songs.length > 0 ? songs : (await (await fetch('/api/songs', { headers })).json());
-      setPlaylistSongs(allSongs.filter(s => pl.songs.includes(s.id)));
+      try {
+        const res = await fetch('/api/songs/by-ids', {
+          method: 'POST', headers,
+          body: JSON.stringify({ ids: pl.songs }),
+        });
+        if (res.ok) {
+          setPlaylistSongs(await res.json());
+        }
+      } catch {
+        setPlaylistSongs([]);
+      }
     } else {
       setPlaylistSongs([]);
     }
@@ -152,7 +161,7 @@ export default function Library({ refreshKey }) {
               <div className="sp-nav-icon sp-icon-playlist">&#9776;</div>
               <div className="sp-nav-text">
                 <span className="sp-nav-name">{pl.name}</span>
-                <span className="sp-nav-count">{pl.songs?.length || 0} canciones</span>
+                <span className="sp-nav-count">{pl.songs?.length || 0} canciones{pl.creator_name ? ` · ${pl.creator_name}` : ''}</span>
               </div>
               <button className="sp-delete-btn" onClick={(e) => deletePlaylist(pl.id, e)} title="Eliminar">&times;</button>
             </div>

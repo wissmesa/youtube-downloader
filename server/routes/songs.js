@@ -58,6 +58,22 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.post("/by-ids", async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.json([]);
+  }
+  try {
+    const result = await pool.query(
+      "SELECT * FROM songs WHERE id = ANY($1) ORDER BY created_at DESC",
+      [ids]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener canciones" });
+  }
+});
+
 router.delete("/:id", async (req, res) => {
   try {
     await pool.query("DELETE FROM songs WHERE id = $1 AND created_by = $2", [req.params.id, req.user.id]);
