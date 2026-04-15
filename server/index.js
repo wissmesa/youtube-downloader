@@ -4,10 +4,14 @@ import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 import { randomUUID } from "crypto";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const DOWNLOADS_DIR = path.resolve("downloads");
+const CLIENT_DIST = path.resolve(__dirname, "../client/dist");
 const YT_DLP_TIMEOUT = 30_000;
 const DOWNLOAD_TIMEOUT = 180_000;
 
@@ -244,6 +248,15 @@ app.get("/api/file/:fileId", (req, res) => {
     }
   });
 });
+
+// ─── Servir frontend (build de React) ─────────────────────────
+if (fs.existsSync(CLIENT_DIST)) {
+  app.use(express.static(CLIENT_DIST));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(CLIENT_DIST, "index.html"));
+  });
+  log("server", `Sirviendo frontend desde ${CLIENT_DIST}`);
+}
 
 const server = app.listen(PORT, () => {
   log("server", `Servidor corriendo en http://localhost:${PORT}`);

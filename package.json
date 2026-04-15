@@ -6,7 +6,8 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && node index.js",
     "client": "cd client && npm run dev",
-    "install:all": "cd server && npm install && cd ../client && npm install"
+    "build": "cd server && npm install && cd ../client && npm install && npm run build",
+    "start": "cd server && node index.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
