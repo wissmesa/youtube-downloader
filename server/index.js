@@ -5,6 +5,10 @@ import path from "path";
 import fs from "fs";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
+import { initDB } from "./db.js";
+import authRoutes from "./routes/auth.js";
+import songsRoutes from "./routes/songs.js";
+import playlistsRoutes from "./routes/playlists.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -276,6 +280,11 @@ app.get("/api/file/:fileId", (req, res) => {
   });
 });
 
+// ─── Auth, Songs, Playlists ──────────────────────────────────
+app.use("/api/auth", authRoutes);
+app.use("/api/songs", songsRoutes);
+app.use("/api/playlists", playlistsRoutes);
+
 // ─── Health check ─────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", port: PORT });
@@ -292,6 +301,8 @@ if (fs.existsSync(CLIENT_DIST)) {
   });
   log("server", `Sirviendo frontend desde ${CLIENT_DIST}`);
 }
+
+initDB().catch((err) => log("db", "Error inicializando DB:", err.message));
 
 const server = app.listen(PORT, "0.0.0.0", () => {
   log("server", `Servidor corriendo en 0.0.0.0:${PORT}`);

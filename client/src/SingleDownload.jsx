@@ -1,8 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
+import { useAuth } from './AuthContext';
 
 const API_BASE = '/api';
 
 export default function SingleDownload() {
+  const { token } = useAuth();
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
   const [fileName, setFileName] = useState('');
@@ -47,6 +49,24 @@ export default function SingleDownload() {
     }
   }, [url]);
 
+  const saveSongToDB = useCallback(async () => {
+    if (!token || !videoInfo) return;
+    try {
+      await fetch(`${API_BASE}/songs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: fileName || videoInfo.title,
+          url,
+          platform: videoInfo.platform || 'youtube',
+          thumbnail: videoInfo.thumbnail,
+          channel: videoInfo.channel,
+          duration: videoInfo.duration,
+        }),
+      });
+    } catch {}
+  }, [token, videoInfo, fileName, url]);
+
   const pollStatus = useCallback((id) => {
     pollingRef.current = setInterval(async () => {
       try {
@@ -60,6 +80,7 @@ export default function SingleDownload() {
           setFileId(id);
           setProgress(100);
           setDownloading(false);
+          saveSongToDB();
         } else if (data.status === 'error') {
           clearInterval(pollingRef.current);
           setError(data.error || 'Error en la descarga');
@@ -67,7 +88,7 @@ export default function SingleDownload() {
         }
       } catch {}
     }, 1000);
-  }, []);
+  }, [saveSongToDB]);
 
   const startDownload = useCallback(async () => {
     setDownloading(true);

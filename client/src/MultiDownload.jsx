@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 
 const API_BASE = '/api';
 
@@ -61,6 +62,7 @@ function SongItem({ item, onNameChange, onDownloadFile }) {
 }
 
 export default function MultiDownload() {
+  const { token } = useAuth();
   const [urls, setUrls] = useState(['']);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -130,6 +132,24 @@ export default function MultiDownload() {
     setLoading(false);
   };
 
+  const saveSongToDB = useCallback(async (song) => {
+    if (!token) return;
+    try {
+      await fetch(`${API_BASE}/songs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: song.fileName || song.title,
+          url: song.url,
+          platform: song.platform || 'youtube',
+          thumbnail: song.thumbnail,
+          channel: song.channel,
+          duration: song.duration,
+        }),
+      });
+    } catch {}
+  }, [token]);
+
   const pollStatus = useCallback((songId, fileId) => {
     pollIntervals.current[songId] = setInterval(async () => {
       try {
@@ -139,6 +159,11 @@ export default function MultiDownload() {
         if (data.status === 'done') {
           clearInterval(pollIntervals.current[songId]);
           updateSong(songId, { status: 'done', progress: 100 });
+          setSongs(prev => {
+            const s = prev.find(x => x.id === songId);
+            if (s) saveSongToDB(s);
+            return prev;
+          });
         } else if (data.status === 'error') {
           clearInterval(pollIntervals.current[songId]);
           updateSong(songId, { status: 'error', error: data.error });
@@ -147,7 +172,7 @@ export default function MultiDownload() {
         }
       } catch {}
     }, 1000);
-  }, [updateSong]);
+  }, [updateSong, saveSongToDB]);
 
   const downloadAll = async () => {
     setDownloading(true);

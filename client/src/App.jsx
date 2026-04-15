@@ -1,38 +1,121 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
+import { AuthProvider, useAuth } from './AuthContext';
+import AuthForm from './AuthForm';
 import SingleDownload from './SingleDownload';
 import MultiDownload from './MultiDownload';
+import Library from './Library';
 
-function App() {
-  const [tab, setTab] = useState('single');
+function AppContent() {
+  const { user, loading, logout } = useAuth();
+  const [dlTab, setDlTab] = useState('single');
+  const [showAuth, setShowAuth] = useState(false);
+
+  useEffect(() => {
+    if (user) setShowAuth(false);
+  }, [user]);
+
+  useEffect(() => {
+    const root = document.getElementById('root');
+    if (user) {
+      root.className = 'logged-layout';
+    } else {
+      root.className = 'guest-layout';
+    }
+  }, [user]);
+
+  if (loading) {
+    return <div className="loading-hint" style={{ padding: 40, textAlign: 'center' }}>Cargando...</div>;
+  }
+
+  if (!user) {
+    return (
+      <>
+        <div className="top-bar">
+          <button className="btn-login-hint" onClick={() => setShowAuth(true)}>
+            Iniciar sesion
+          </button>
+        </div>
+
+        <div className="app">
+          <h1>Audio Downloader</h1>
+          <p className="subtitle">Descarga audio en MP3 desde YouTube o SoundCloud</p>
+          <div className="platforms">
+            <span className="platform-badge yt">YouTube</span>
+            <span className="platform-badge sc">SoundCloud</span>
+          </div>
+
+          <div className="tabs">
+            <button className={`tab ${dlTab === 'single' ? 'tab-active' : ''}`} onClick={() => setDlTab('single')}>
+              Una cancion
+            </button>
+            <button className={`tab ${dlTab === 'multi' ? 'tab-active' : ''}`} onClick={() => setDlTab('multi')}>
+              Varias canciones
+            </button>
+          </div>
+
+          {dlTab === 'single' && <SingleDownload />}
+          {dlTab === 'multi' && <MultiDownload />}
+        </div>
+
+        {showAuth && (
+          <div className="modal-overlay" onClick={() => setShowAuth(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setShowAuth(false)}>&times;</button>
+              <AuthForm />
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
-    <div className="app">
-      <h1>Audio Downloader</h1>
-      <p className="subtitle">Descarga audio en MP3 desde YouTube o SoundCloud</p>
+    <div className="logged-shell">
+      <header className="logged-header">
+        <h1 className="logged-logo">Audio Downloader</h1>
+        <div className="user-bar">
+          <span className="user-name">{user.name}</span>
+          <button className="btn-logout" onClick={logout}>Salir</button>
+        </div>
+      </header>
 
-      <div className="platforms">
-        <span className="platform-badge yt">YouTube</span>
-        <span className="platform-badge sc">SoundCloud</span>
+      <div className="logged-body">
+        <aside className="dl-panel">
+          <div className="dl-panel-inner">
+            <h2 className="dl-panel-title">Descargar</h2>
+            <div className="platforms" style={{ justifyContent: 'flex-start', marginBottom: 12 }}>
+              <span className="platform-badge yt">YouTube</span>
+              <span className="platform-badge sc">SoundCloud</span>
+            </div>
+
+            <div className="tabs">
+              <button className={`tab ${dlTab === 'single' ? 'tab-active' : ''}`} onClick={() => setDlTab('single')}>
+                Una
+              </button>
+              <button className={`tab ${dlTab === 'multi' ? 'tab-active' : ''}`} onClick={() => setDlTab('multi')}>
+                Varias
+              </button>
+            </div>
+
+            {dlTab === 'single' && <SingleDownload />}
+            {dlTab === 'multi' && <MultiDownload />}
+          </div>
+        </aside>
+
+        <main className="lib-panel">
+          <Library />
+        </main>
       </div>
-
-      <div className="tabs">
-        <button
-          className={`tab ${tab === 'single' ? 'tab-active' : ''}`}
-          onClick={() => setTab('single')}
-        >
-          Una cancion
-        </button>
-        <button
-          className={`tab ${tab === 'multi' ? 'tab-active' : ''}`}
-          onClick={() => setTab('multi')}
-        >
-          Varias canciones
-        </button>
-      </div>
-
-      {tab === 'single' ? <SingleDownload /> : <MultiDownload />}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

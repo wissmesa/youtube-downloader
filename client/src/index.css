@@ -11,13 +11,24 @@ body {
   background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
   color: #e0e0e0;
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 #root {
   width: 100%;
+  min-height: 100vh;
+}
+
+#root.guest-layout {
   max-width: 520px;
+  margin: 0 auto;
   padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+#root.logged-layout {
+  max-width: 100%;
+  padding: 0;
 }
