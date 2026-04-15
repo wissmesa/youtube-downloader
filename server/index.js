@@ -258,8 +258,13 @@ if (fs.existsSync(CLIENT_DIST)) {
   log("server", `Sirviendo frontend desde ${CLIENT_DIST}`);
 }
 
-const server = app.listen(PORT, () => {
-  log("server", `Servidor corriendo en http://localhost:${PORT}`);
+// ─── Health check ─────────────────────────────────────────────
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", port: PORT });
+});
+
+const server = app.listen(PORT, "0.0.0.0", () => {
+  log("server", `Servidor corriendo en 0.0.0.0:${PORT}`);
 });
 
 server.on("error", (err) => {
