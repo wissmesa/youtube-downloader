@@ -240,7 +240,8 @@ app.get("/api/file/:fileId", (req, res) => {
   const sizeKB = (fs.statSync(filePath).size / 1024).toFixed(0);
   log("file", `Enviando: ${sizeKB} KB`);
 
-  res.download(filePath, "audio.mp3", (err) => {
+  const fileName = req.query.name ? `${req.query.name}.mp3` : "audio.mp3";
+  res.download(filePath, fileName, (err) => {
     if (err) {
       log("file", "Error enviando:", err.message);
     } else {
@@ -250,19 +251,22 @@ app.get("/api/file/:fileId", (req, res) => {
   });
 });
 
-// ─── Servir frontend (build de React) ─────────────────────────
-if (fs.existsSync(CLIENT_DIST)) {
-  app.use(express.static(CLIENT_DIST));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(CLIENT_DIST, "index.html"));
-  });
-  log("server", `Sirviendo frontend desde ${CLIENT_DIST}`);
-}
-
 // ─── Health check ─────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", port: PORT });
 });
+
+// ─── Servir frontend (build de React) ─────────────────────────
+if (fs.existsSync(CLIENT_DIST)) {
+  app.use(express.static(CLIENT_DIST));
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ error: "Endpoint no encontrado" });
+    }
+    res.sendFile(path.join(CLIENT_DIST, "index.html"));
+  });
+  log("server", `Sirviendo frontend desde ${CLIENT_DIST}`);
+}
 
 const server = app.listen(PORT, "0.0.0.0", () => {
   log("server", `Servidor corriendo en 0.0.0.0:${PORT}`);

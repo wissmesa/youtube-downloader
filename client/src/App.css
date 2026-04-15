@@ -22,9 +22,43 @@
   text-align: center;
   color: #888;
   font-size: 0.9rem;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
+/* ─── Tabs ─────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #888;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: #ccc;
+}
+
+.tab-active {
+  background: rgba(255, 71, 87, 0.15);
+  color: #ff6b81;
+  font-weight: 600;
+}
+
+/* ─── Inputs ───────────────────────────────────────────────── */
 .input-group {
   display: flex;
   gap: 10px;
@@ -52,6 +86,59 @@
   box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.15);
 }
 
+.multi-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  margin-bottom: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.multi-input::placeholder {
+  color: #555;
+}
+
+.multi-input:focus {
+  border-color: #ff4757;
+  box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.15);
+}
+
+/* ─── Filename field ───────────────────────────────────────── */
+.filename-group {
+  margin-top: 12px;
+}
+
+.filename-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.filename-group input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filename-group input:focus {
+  border-color: #ff4757;
+}
+
+/* ─── Buttons ──────────────────────────────────────────────── */
 .btn {
   padding: 14px 24px;
   border-radius: 12px;
@@ -62,6 +149,7 @@
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -80,9 +168,12 @@
   cursor: not-allowed;
 }
 
+.btn-full {
+  width: 100%;
+}
+
 .btn-download {
   width: 100%;
-  justify-content: center;
   padding: 16px;
   background: linear-gradient(135deg, #2ed573, #17c964);
   color: #fff;
@@ -95,6 +186,14 @@
   box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
 }
 
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  margin-top: 0;
+  width: auto;
+}
+
+/* ─── Video info ───────────────────────────────────────────── */
 .video-info {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -129,8 +228,77 @@
   color: #888;
 }
 
+/* ─── Songs list (multi) ───────────────────────────────────── */
+.songs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.song-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.song-item.song-done {
+  border-color: rgba(46, 213, 115, 0.2);
+}
+
+.song-item.song-error {
+  border-color: rgba(255, 71, 87, 0.2);
+}
+
+.song-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.song-thumb {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.song-meta h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.song-channel {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.song-done-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.song-status-text {
+  margin-top: 8px;
+  font-size: 0.82rem;
+}
+
+/* ─── Progress ─────────────────────────────────────────────── */
 .progress-section {
-  margin-top: 20px;
+  margin-top: 12px;
 }
 
 .progress-bar-bg {
@@ -139,7 +307,7 @@
   background: rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .progress-bar-fill {
@@ -151,10 +319,11 @@
 
 .progress-text {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #aaa;
 }
 
+/* ─── Spinner ──────────────────────────────────────────────── */
 .spinner {
   width: 16px;
   height: 16px;
@@ -172,7 +341,7 @@
   text-align: center;
   color: #aaa;
   font-size: 0.85rem;
-  padding: 16px 0;
+  padding: 12px 0;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -181,26 +350,30 @@
   50% { opacity: 1; }
 }
 
+/* ─── Error / Status ───────────────────────────────────────── */
 .error {
   background: rgba(255, 71, 87, 0.1);
   border: 1px solid rgba(255, 71, 87, 0.3);
   color: #ff6b81;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-radius: 10px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   text-align: center;
-  margin-top: 16px;
+  margin-top: 10px;
 }
 
 .status-done {
-  text-align: center;
-  margin-top: 12px;
   color: #2ed573;
   font-size: 0.85rem;
   font-weight: 500;
 }
 
+/* ─── Responsive ───────────────────────────────────────────── */
 @media (max-width: 500px) {
+  .app {
+    padding: 28px 18px;
+  }
+
   .video-info {
     flex-direction: column;
     text-align: center;
@@ -210,5 +383,16 @@
     width: 100%;
     height: auto;
     max-height: 160px;
+  }
+
+  .song-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .song-thumb {
+    width: 100%;
+    height: auto;
+    max-height: 100px;
   }
 }
