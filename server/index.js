@@ -106,7 +106,8 @@ app.post("/api/info", (req, res) => {
     }
     if (code !== 0) {
       log("info", "stderr:", stderrData);
-      return res.status(500).json({ error: "No se pudo obtener info del video" });
+      const detail = stderrData.trim().split("\n").pop() || "Error desconocido";
+      return res.status(500).json({ error: `yt-dlp error: ${detail}` });
     }
 
     try {
