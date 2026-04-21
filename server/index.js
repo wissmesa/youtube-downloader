@@ -3,6 +3,7 @@ import cors from "cors";
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
+import os from "node:os";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
 import { initDB } from "./db.js";
@@ -91,13 +92,43 @@ function getPlaylistUrl(url) {
   }
 }
 
-const COOKIES_PATH = path.resolve(__dirname, "cookies.txt");
-const hasCookies = fs.existsSync(COOKIES_PATH);
-if (hasCookies) log("server", "Archivo de cookies encontrado:", COOKIES_PATH);
+const COOKIES_FILE = path.resolve(__dirname, "cookies.txt");
+
+/**
+ * Cookies para yt-dlp (YouTube):
+ * - Local: coloca `server/cookies.txt` (Netscape) o regenera Base64 con:
+ *   `base64 -i server/cookies.txt | tr -d '\n' > server/cookies.txt.b64`
+ * - Railway: copia el contenido de `server/cookies.txt.b64` (una sola línea) y pégalo en
+ *   Railway → tu proyecto → el servicio (Node) → Variables → New Variable
+ *   Nombre: YT_DLP_COOKIES_B64  |  Valor: (pegar)  |  marcar como Sensitive si existe la opción.
+ * Prioridad al arrancar: variable de entorno YT_DLP_COOKIES_B64 > archivo cookies.txt
+ */
+function resolveCookiesPath() {
+  const b64 = process.env.YT_DLP_COOKIES_B64?.trim();
+  if (b64) {
+    try {
+      const raw = Buffer.from(b64.replace(/\s/g, ""), "base64").toString("utf8");
+      const tmp = path.join(os.tmpdir(), "youtube-cookies.txt");
+      fs.writeFileSync(tmp, raw, "utf8");
+      log("server", "Cookies cargadas desde variable YT_DLP_COOKIES_B64 →", tmp);
+      return tmp;
+    } catch (e) {
+      log("server", "YT_DLP_COOKIES_B64 inválida:", e.message);
+    }
+  }
+  if (fs.existsSync(COOKIES_FILE)) {
+    log("server", "Archivo de cookies encontrado:", COOKIES_FILE);
+    return COOKIES_FILE;
+  }
+  return null;
+}
+
+const cookiesPathForYtdlp = resolveCookiesPath();
+const hasCookies = Boolean(cookiesPathForYtdlp);
 
 function ytdlpArgs(extra = []) {
   const base = ["--no-warnings"];
-  if (hasCookies) base.push("--cookies", COOKIES_PATH);
+  if (hasCookies) base.push("--cookies", cookiesPathForYtdlp);
   return [...base, ...extra];
 }
 
